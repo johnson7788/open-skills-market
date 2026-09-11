@@ -1,0 +1,36 @@
+# 补充依赖：覆盖 skills 脚本常用第三方库，尽量全面（配合 requirements.txt 一起安装）
+# 网络/HTTP
+requests
+httpx
+aiohttp
+urllib3
+# 解析/HTML/XML
+lxml
+defusedxml
+beautifulsoup4
+# 文档处理
+pypdf
+pymupdf            # fitz
+pdfplumber
+pdf2image
+python-docx
+python-pptx
+weasyprint
+# 图片
+pillow
+# 数据科学
+numpy
+pandas
+scipy
+matplotlib
+seaborn
+# 表格
+openpyxl
+xlsxwriter
+# 文本/模板
+markdown
+jinja2
+tabulate
+# 其它
+validators
+cryptography

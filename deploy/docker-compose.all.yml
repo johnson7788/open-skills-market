@@ -1,0 +1,184 @@
+# SkillHub（注册中心）+ Skill Market（市场/运行时）一键合编排
+# 用法：在 skill-market 根目录执行  ./deploy.sh
+# 端口全部错开，避免与本机已占用的 5432/6379/9000/8000 冲突：
+#   skillhub-web        18081
+#   skillhub-server     18080
+#   skillhub-postgres   15432
+#   skillhub-redis      16379
+#   skillmarket-frontend 5174
+#   skillmarket-backend  8001
+name: skillhub-demo
+
+services:
+  # ============ SkillHub 依赖 ============
+  skillhub-postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: skillhub
+      POSTGRES_USER: skillhub
+      POSTGRES_PASSWORD: skillhub_demo
+    ports:
+      - "15432:5432"
+    volumes:
+      - skillhub_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U skillhub -d skillhub"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  skillhub-redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "16379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - skillhub_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 安全扫描器（发布必需：SkillHub 发布流程要求 scanner 结果）
+  skillhub-scanner:
+    image: ghcr.io/iflytek/skillhub-scanner:${SKILLHUB_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "18000:8000"
+    environment:
+      SKILL_SCANNER_LLM_API_KEY: ${SKILL_SCANNER_LLM_API_KEY:-}
+      SKILL_SCANNER_LLM_BASE_URL: ${SKILL_SCANNER_LLM_BASE_URL:-}
+      SKILL_SCANNER_LLM_MODEL: ${SKILL_SCANNER_LLM_MODEL:-}
+      SKILLHUB_SCANNER_MAX_CONCURRENT_SCANS: "1"
+      SKILLHUB_SCANNER_HARD_TIMEOUT_SECONDS: "930"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # ============ SkillHub 应用 ============
+  skillhub-server:
+    image: ghcr.io/iflytek/skillhub-server:${SKILLHUB_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "18080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://skillhub-postgres:5432/skillhub
+      SPRING_DATASOURCE_USERNAME: skillhub
+      SPRING_DATASOURCE_PASSWORD: skillhub_demo
+      SPRING_DATA_REDIS_HOST: skillhub-redis
+      SPRING_DATA_REDIS_PORT: "6379"
+      # 本地测试用 local 存储（无需 S3/MinIO）；生产换 s3 + SKILLHUB_STORAGE_S3_*
+      SKILLHUB_STORAGE_PROVIDER: local
+      STORAGE_BASE_PATH: /var/lib/skillhub/storage
+      # 必需：匿名下载 cookie 签名密钥
+      SKILLHUB_DOWNLOAD_ANON_COOKIE_SECRET: local-dev-anon-cookie-secret-0123456789abcdef
+      # 启用安全扫描（SkillHub 发布流程必需）；scanner 见上方 skillhub-scanner 服务
+      SKILLHUB_SECURITY_SCANNER_ENABLED: "true"
+      SKILLHUB_SECURITY_SCANNER_URL: http://skillhub-scanner:8000
+      SKILLHUB_SECURITY_SCANNER_MODE: upload
+      SKILLHUB_SECURITY_SCANNER_CONNECT_TIMEOUT: "5000"
+      SKILLHUB_SECURITY_SCANNER_READ_TIMEOUT: "900000"
+      SKILLHUB_SECURITY_SCANNER_RETRY_MAX: "3"
+      # 启用内置技能，保证首次同步即有数据可拉
+      SKILLHUB_BUILTIN_SKILLS_ENABLED: "true"
+      SKILLHUB_PUBLIC_BASE_URL: ${SKILLHUB_PUBLIC_BASE_URL:-http://localhost:18080}
+      SESSION_COOKIE_SECURE: "false"
+      # 引导管理员（仅本地演示用；生产务必通过 SKILLHUB_ADMIN_PASSWORD 覆盖）
+      BOOTSTRAP_ADMIN_ENABLED: "true"
+      BOOTSTRAP_ADMIN_USERNAME: ${SKILLHUB_ADMIN_USERNAME:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${SKILLHUB_ADMIN_PASSWORD:-change-me-local-demo}
+      BOOTSTRAP_ADMIN_DISPLAY_NAME: Admin
+      BOOTSTRAP_ADMIN_EMAIL: admin@skillhub.local
+      # OAuth 占位（docker profile 需要，本地不用真实 OAuth）
+      OAUTH2_GITHUB_CLIENT_ID: local-placeholder
+      OAUTH2_GITHUB_CLIENT_SECRET: local-placeholder
+      SKILLHUB_AUTH_DIRECT_ENABLED: "false"
+    volumes:
+      - skillhub_storage:/var/lib/skillhub/storage
+    depends_on:
+      skillhub-postgres:
+        condition: service_healthy
+      skillhub-redis:
+        condition: service_healthy
+      skillhub-scanner:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+  skillhub-web:
+    image: ghcr.io/iflytek/skillhub-web:${SKILLHUB_VERSION:-latest}
+    restart: unless-stopped
+    ports:
+      - "18081:80"
+    environment:
+      SKILLHUB_API_UPSTREAM: http://skillhub-server:8080
+      SKILLHUB_PUBLIC_BASE_URL: ${SKILLHUB_PUBLIC_BASE_URL:-http://localhost:18080}
+    depends_on:
+      skillhub-server:
+        condition: service_healthy
+
+  # ============ Skill Market（消费 SkillHub） ============
+  skillmarket-backend:
+    build:
+      context: ../backend
+    image: skill-market-backend:latest
+    restart: unless-stopped
+    env_file:
+      - path: ../backend/.env
+        required: false
+    environment:
+      # 关键：指向本 compose 内的 SkillHub server
+      SKILLHUB_URL: http://skillhub-server:8080
+      SKILLHUB_TOKEN: ${SKILLHUB_TOKEN:-}
+      SKILLHUB_SYNC_NAMESPACES: ${SKILLHUB_SYNC_NAMESPACES:-}
+      SKILLHUB_SYNC_LIMIT: ${SKILLHUB_SYNC_LIMIT:-0}
+    # 启动前先同步 SkillHub 技能，再起 uvicorn（同步失败不阻塞启动）
+    command: >
+      sh -c "python -m app.services.skillhub_sync || true;
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8001:8000"
+    volumes:
+      - backend_data:/app/data
+      - backend_workspaces:/app/.workspaces
+    depends_on:
+      skillhub-server:
+        condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - backend   # frontend 的 nginx.conf 反代 upstream 名保持 backend 不变
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  skillmarket-frontend:
+    build:
+      context: ../frontend
+    image: skill-market-frontend:latest
+    restart: unless-stopped
+    ports:
+      - "5174:80"
+    depends_on:
+      skillmarket-backend:
+        condition: service_healthy
+
+volumes:
+  skillhub_pg:
+  skillhub_redis:
+  skillhub_storage:
+  backend_data:
+  backend_workspaces:

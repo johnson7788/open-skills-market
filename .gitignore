@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node
+node_modules/
+
+# 本地环境与密钥（勿提交）
+.env
+.env.*
+!.env.example
+
+# 运行期产物
+backend/.workspaces/
+backend/data/
+*.log
+
+# 工具副作用 / 打包产物
+config/
+dist/
+
+# macOS
+.DS_Store
+
+# 测试产物
+.pytest_cache/
+frontend/test-results/
+frontend/playwright-report/
+
+# SkillHub 同步产物（可随时重新拉取）
+backend/app/skills/_remote/

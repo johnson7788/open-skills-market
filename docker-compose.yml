@@ -1,0 +1,37 @@
+name: skill-market
+
+services:
+  backend:
+    build:
+      context: ./backend
+    image: skill-market-backend:latest
+    env_file:
+      # 可选：不存在也能启动（此时商店浏览可用，智能体对话会提示「未配置 LLM_API_KEY」）
+      - path: ./backend/.env
+        required: false
+    ports:
+      - "${BACKEND_PORT:-8001}:8000"
+    volumes:
+      - backend_data:/app/data
+      - backend_workspaces:/app/.workspaces
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  frontend:
+    build:
+      context: ./frontend
+    image: skill-market-frontend:latest
+    depends_on:
+      - backend
+    ports:
+      - "${FRONTEND_PORT:-5174}:80"
+    restart: unless-stopped
+
+volumes:
+  backend_data:
+  backend_workspaces:

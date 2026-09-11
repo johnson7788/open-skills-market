@@ -1,0 +1,12 @@
+{
+  "slug": "text-stats",
+  "name": "text-stats",
+  "version": "1.0.0",
+  "description": "统计文本文件的行数、字符数、词数与高频词，零第三方依赖。",
+  "examples": [
+    "帮我统计 /workspace/report.md 的行数和词数",
+    "看看这份文本里出现最多的 20 个词"
+  ],
+  "dependencies": [],
+  "max_steps": 15
+}

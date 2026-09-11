@@ -1,0 +1,12 @@
+{
+  "slug": "hello-skill",
+  "name": "hello-skill",
+  "version": "1.0.0",
+  "description": "最小可用示例技能，演示 SKILL.md 目录结构、frontmatter 字段与脚本调用方式。",
+  "examples": [
+    "用 hello-skill 跟我打个招呼",
+    "演示一下 hello-skill 的脚本怎么运行"
+  ],
+  "dependencies": [],
+  "max_steps": 20
+}

@@ -1,0 +1,62 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "clinical",
+      "name": "临床医学",
+      "name_en": "Clinical Medicine",
+      "icon": "🏥",
+      "description": "临床决策支持、药物查询、诊断推理、病历生成等临床实用工具",
+      "order": 1
+    },
+    {
+      "id": "research",
+      "name": "科研工具",
+      "name_en": "Research Tools",
+      "icon": "🔬",
+      "description": "文献检索、系统评价、深度研究、写作辅助等科研支撑工具",
+      "order": 2
+    },
+    {
+      "id": "bioinformatics",
+      "name": "生物信息",
+      "name_en": "Bioinformatics",
+      "icon": "🧬",
+      "description": "单细胞分析、RNA-seq、蛋白质结构预测、基因数据库等生信工具",
+      "order": 3
+    },
+    {
+      "id": "data-science",
+      "name": "数据科学",
+      "name_en": "Data Science",
+      "icon": "📊",
+      "description": "统计分析、数据可视化、时间序列、数据格式转换等数据处理工具",
+      "order": 4
+    },
+    {
+      "id": "document",
+      "name": "文档处理",
+      "name_en": "Document Processing",
+      "icon": "📄",
+      "description": "PDF、Word、PPT、Markdown 的创建、编辑、解析和格式转换",
+      "order": 5
+    },
+    {
+      "id": "productivity",
+      "name": "效率工具",
+      "name_en": "Productivity",
+      "icon": "⚡",
+      "description": "浏览器自动化、任务规划、文本处理等通用效率提升工具",
+      "order": 6
+    },
+    {
+      "id": "remote",
+      "name": "远程技能",
+      "name_en": "Remote (SkillHub)",
+      "icon": "🌐",
+      "description": "从 SkillHub 注册中心同步的外部技能",
+      "order": 7,
+      "path": "_remote"
+    }
+  ]
+}

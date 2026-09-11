@@ -1,0 +1,12 @@
+{
+  "slug": "csv-to-markdown",
+  "name": "csv-to-markdown",
+  "version": "1.0.0",
+  "description": "把 CSV 文件转换成 Markdown 表格，支持分隔符与编码参数，零第三方依赖。",
+  "examples": [
+    "把 /workspace/data.csv 转成 Markdown 表格",
+    "读取这个 CSV 并输出成 Markdown 表格文件"
+  ],
+  "dependencies": [],
+  "max_steps": 15
+}
