@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
     --no-build) BUILD=0 ;;
     --publish) ACTION="publish"; shift; PUBLISH_ARGS=("$@"); break ;;
     -h|--help)
-      sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+      sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "未知参数：$1（--help 查看用法）" >&2; exit 2 ;;
   esac
   shift

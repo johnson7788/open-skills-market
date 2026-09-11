@@ -4,6 +4,14 @@
 
 后端用 `FastAPI`，前端用 `React + Vite`。技能以标准 `SKILL.md` 目录组织，启动时自动扫描成市场目录；智能体通过 OpenAI 兼容接口做流式 tool-calling，在工作区沙箱里运行技能脚本。
 
+## 界面预览
+
+| 技能商店 | 智能体对话（推理过程 + 工具调用） |
+|---|---|
+| ![技能商店](./docs/screenshot-store.png) | ![智能体对话](./docs/screenshot-chat-tools.png) |
+
+> 截图为 `./deploy.sh` 全量部署实例：市场里共 21 个技能（3 个内置示例 + 18 个从 SkillHub 同步）。
+
 ## 核心能力
 
 | 能力 | 说明 |
@@ -17,6 +25,13 @@
 | SkillHub 集成 | 可选：从 [SkillHub](https://github.com/iflytek/skillhub) 注册中心同步技能，也可把本地技能批量发布上去 |
 
 ## 架构
+
+![架构总览](./docs/architecture.png)
+
+一句话概括三层分工：**目录层**（`data.py`）把文件系统变成市场商品，**运行时**（`agent/`）把 `SKILL.md` 变成可执行能力，**治理层**（`services/`）对接 SkillHub 做同步与发布——市场展示和智能体执行读的是同一份技能目录。
+
+<details>
+<summary>展开文本版架构图</summary>
 
 ```
 ┌──────────────────────────────────────────────────────┐
@@ -39,6 +54,8 @@
 │  SkillHub 注册中心（技能源 / 治理）                   │
 └──────────────────────────────────────────────────────┘
 ```
+
+</details>
 
 ## 技术栈
 
@@ -76,10 +93,13 @@ skill-market/
 │       └── AuthContext.jsx      # 登录态管理
 ├── deploy/
 │   └── docker-compose.all.yml   # SkillHub + skill-market 合编排（可选）
+├── docs/
+│   ├── API.md                   # 接口文档
+│   ├── architecture.png         # 架构总览图
+│   └── screenshot-*.png         # 界面截图（商店 / 对话 / 产物）
 ├── deploy.sh                    # 一键部署 SkillHub + skill-market（可选）
 ├── docker-compose.yml           # 单项目 Docker 部署
-├── start_backend.sh / start_frontend.sh
-└── API.md                       # 接口文档
+└── start_backend.sh / start_frontend.sh
 ```
 
 ## 快速开始
@@ -209,6 +229,10 @@ docker compose up -d
 | 技能商店 | `/` | 分类筛选、搜索、`全部 / 我的使用项目` 两个 tab，技能卡片带「试用」示例问题 |
 | 对话页 | `/chat/:slug` | 针对某个技能的智能体对话：流式回复 + 推理过程 + 工具调用 + 产物下载 |
 
+对话页底部的「产物」区，会把智能体在工作区里真实写出的文件列出来，可直接下载：
+
+![对话页产物](./docs/screenshot-chat-artifacts.png)
+
 ## 技能格式
 
 技能是标准 `SKILL.md` 目录：
@@ -246,6 +270,10 @@ keywords:
 - **同步**：启动时把 SkillHub 上的公开技能拉到 `backend/app/skills/_remote/<namespace>/<slug>/`，市场出现「远程技能」分类，智能体也能直接调用。
 - **发布**：把本地 `skills/` 下的技能批量上传到 SkillHub（幂等）。
 
+同步完成后，从 SkillHub 拉下来的技能会统一归入「远程技能」分类：
+
+![远程技能分类](./docs/screenshot-store-remote.png)
+
 | 环境变量 | 说明 |
 |---|---|
 | `SKILLHUB_URL` | SkillHub 地址（不配则跳过同步） |
@@ -267,7 +295,7 @@ python3 backend/app/services/publish_to_skillhub.py --only hello-skill --dry-run
 
 ## API 概览
 
-完整接口文档见 [API.md](./API.md)。当前接口：
+完整接口文档见 [docs/API.md](./docs/API.md)。当前接口：
 
 **市场（无需鉴权）**
 
