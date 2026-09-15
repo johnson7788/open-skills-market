@@ -96,7 +96,8 @@ skill-market/
 ├── docs/
 │   ├── API.md                   # 接口文档
 │   ├── architecture.png         # 架构总览图
-│   └── screenshot-*.png         # 界面截图（商店 / 对话 / 产物）
+│   ├── screenshot-*.png         # 界面截图（商店 / 对话 / 产物）
+│   └── wechat.png               # 作者微信（交流反馈）
 ├── deploy.sh                    # 一键部署 SkillHub + skill-market（可选）
 ├── docker-compose.yml           # 单项目 Docker 部署
 └── start_backend.sh / start_frontend.sh
@@ -366,6 +367,12 @@ SM_BASE_URL=http://127.0.0.1:8001 SM_FRONTEND_URL=http://127.0.0.1:5174 \
 - 登录采用「仅用户名」轻量方案，**不做密码校验**，适合本地/内网演示；面向公网部署前请替换为真实鉴权。
 - 后端默认开启宽松 `CORS` 方便前后端分离开发，生产环境请收敛 `allow_origins`。
 - 智能体的 `run_command` 在容器/宿主机本地运行，只做黑名单与路径约束，**不是完整沙箱**；生产环境请配合容器或独立执行环境隔离。
+
+## 交流与反馈
+
+有问题、想加技能，或者踩到了坑，欢迎提 [Issue](https://github.com/johnson7788/open-skills-market/issues)，也可以扫码加我微信直接聊：
+
+<img src="./docs/wechat.png" alt="作者微信" width="240" />
 
 ## 致谢
 
